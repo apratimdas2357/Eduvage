@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Eduvage - Dashboard{% endblock %}
+
+{% block content %}
+<div class="flex h-screen bg-[#f7f7fa] overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-primary text-white flex-shrink-0 hidden md:flex flex-col relative h-full">
+        <div class="p-6">
+            <h2 class="text-2xl font-bold tracking-widest">EDUVAGE</h2>
+            <p class="text-xs text-gray-300 mt-1 uppercase">Student Portal</p>
+        </div>
+
+        <nav class="mt-4 flex-1">
+            <ul class="space-y-1">
+                <li><a href="#" class="block py-3 px-6 hover:bg-primaryHover font-semibold border-l-4 border-white">Dashboard</a></li>
+                <li><a href="#" class="block py-3 px-6 hover:bg-primaryHover text-gray-300 transition border-l-4 border-transparent">My Profile</a></li>
+                <li><a href="#" class="block py-3 px-6 hover:bg-primaryHover text-gray-300 transition border-l-4 border-transparent">Attendance</a></li>
+                <li><a href="#" class="block py-3 px-6 hover:bg-primaryHover text-gray-300 transition border-l-4 border-transparent">Marks & Results</a></li>
+                <li><a href="#" class="block py-3 px-6 hover:bg-primaryHover text-gray-300 transition border-l-4 border-transparent">Fees & Payments</a></li>
+                <li><a href="#" class="block py-3 px-6 hover:bg-primaryHover text-gray-300 transition border-l-4 border-transparent">Hostel</a></li>
+                <li><a href="#" class="block py-3 px-6 hover:bg-primaryHover text-gray-300 transition border-l-4 border-transparent">Applications</a></li>
+                <li><a href="#" class="block py-3 px-6 hover:bg-primaryHover text-gray-300 transition border-l-4 border-transparent">Notifications</a></li>
+                <li><a href="#" class="block py-3 px-6 hover:bg-primaryHover text-gray-300 transition border-l-4 border-transparent">Settings</a></li>
+            </ul>
+        </nav>
+
+        <div class="p-6 mb-4">
+            <a href="/" class="text-gray-300 hover:text-white transition flex items-center gap-2">
+                Logout
+            </a>
+        </div>
+
+        <!-- Bottom left subtle pattern -->
+        <div class="absolute bottom-0 left-0 w-full h-32 overflow-hidden z-0 opacity-20 pointer-events-none">
+            <svg viewBox="0 0 100 100" class="w-full h-full transform scale-150 translate-y-8 -translate-x-8">
+                <polygon points="0,100 100,0 100,50 0,150" fill="white" />
+            </svg>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col h-full overflow-hidden">
+
+        <!-- Top Navbar -->
+        <header class="bg-white border-b border-gray-200 px-6 lg:px-10 py-4 flex justify-between items-center flex-shrink-0 shadow-sm">
+            <!-- Mobile Menu Button -->
+            <button class="md:hidden text-primary">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+
+            <div class="hidden md:block">
+                <h1 class="text-xl font-bold text-primary">{{ data.college_name }}</h1>
+                <p class="text-sm text-gray-500">{{ data.course }} &bull; Semester {{ data.semester }}</p>
+            </div>
+
+            <div class="flex items-center gap-4 text-right">
+                <div>
+                    <p class="text-sm font-bold">{{ data.user_name }}</p>
+                    <p class="text-xs text-gray-500">Roll No: {{ data.roll_no }}</p>
+                </div>
+                <div class="w-10 h-10 bg-primary text-white flex items-center justify-center font-bold text-lg rounded-sm shadow-md">
+                    {{ data.user_initials }}
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Content Scrollable Area -->
+        <main class="flex-1 overflow-y-auto p-6 lg:p-10">
+            <h2 class="text-3xl font-bold mb-8 text-black pb-2 border-b-4 border-primary inline-block">Welcome back, {{ data.first_name }}</h2>
+
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
+                <!-- Card 1: Attendance -->
+                <div class="bg-white p-6 shadow-sm border border-gray-100 flex flex-col justify-between h-40">
+                    <div>
+                        <h3 class="text-xs font-bold text-primary mb-2 uppercase">Overall Attendance</h3>
+                        <p class="text-4xl font-bold text-primary">{{ data.attendance }}%</p>
+                    </div>
+                    <div class="pt-3 border-t border-gray-100 mt-2">
+                        <p class="text-xs text-gray-600">No attendance warning</p>
+                    </div>
+                </div>
+
+                <!-- Card 2: CGPA -->
+                <div class="bg-white p-6 shadow-sm border border-gray-100 flex flex-col justify-between h-40">
+                    <div>
+                        <h3 class="text-xs font-bold text-primary mb-2 uppercase">Current CGPA</h3>
+                        <p class="text-4xl font-bold text-primary">{{ data.cgpa }}</p>
+                    </div>
+                    <div class="pt-3 border-t border-gray-100 mt-2">
+                        <p class="text-xs text-gray-600">S5 Academic GPA</p>
+                    </div>
+                </div>
+
+                <!-- Card 3: Fees -->
+                <div class="bg-white p-6 shadow-sm border border-gray-100 flex flex-col justify-between h-40">
+                    <div>
+                        <h3 class="text-xs font-bold text-primary mb-2 uppercase">Academic Fees Due</h3>
+                        <p class="text-4xl font-bold text-primary">₹{{ data.fees_due }}</p>
+                    </div>
+                    <div class="pt-3 border-t border-gray-100 mt-2">
+                        <p class="text-xs text-gray-600">Due date: {{ data.fees_due_date }}</p>
+                    </div>
+                </div>
+
+                <!-- Card 4: Exams -->
+                <div class="bg-white p-6 shadow-sm border border-gray-100 flex flex-col justify-between h-40">
+                    <div>
+                        <h3 class="text-xs font-bold text-primary mb-2 uppercase">Next Scheduled Exam</h3>
+                        <p class="text-4xl font-bold text-primary">{{ data.next_exam_date }}</p>
+                    </div>
+                    <div class="pt-3 border-t border-gray-100 mt-2">
+                        <p class="text-xs text-gray-600">{{ data.next_exam_subject }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Middle Row: Recent Marks & Upcoming Exams -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+                <!-- Recent Marks -->
+                <div class="bg-white shadow-sm border border-gray-100 p-6 lg:col-span-2">
+                    <h3 class="text-lg font-bold text-primary uppercase mb-4 pb-2 border-b-2 border-black inline-block">Recent Marks & Sessionals</h3>
+
+                    <div class="overflow-x-auto mt-2">
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs text-gray-500 uppercase border-b border-gray-200">
+                                <tr>
+                                    <th scope="col" class="py-3 font-bold">Subject</th>
+                                    <th scope="col" class="py-3 font-bold">Obtained</th>
+                                    <th scope="col" class="py-3 font-bold text-right">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for mark in data.recent_marks %}
+                                <tr class="border-b border-gray-100 last:border-0 hover:bg-gray-50">
+                                    <td class="py-3 font-medium">{{ mark.subject }}</td>
+                                    <td class="py-3 font-bold text-primary">{{ mark.obtained }}/100</td>
+                                    <td class="py-3 font-bold text-right text-green-600">{{ mark.status }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Upcoming Exams -->
+                <div class="bg-white shadow-sm border border-gray-100 p-6">
+                    <h3 class="text-lg font-bold text-primary uppercase mb-4 pb-2 border-b-2 border-black inline-block">Upcoming Exams</h3>
+
+                    <div class="space-y-4 mt-2">
+                        {% for exam in data.upcoming_exams %}
+                        <div class="border border-gray-200 p-3 flex flex-col">
+                            <p class="font-bold text-sm">{{ exam.subject }}</p>
+                            <div class="flex justify-between items-end mt-2">
+                                <p class="text-xs text-gray-500">{{ exam.date }}</p>
+                                <p class="text-xs font-bold text-primary">{{ exam.time }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <button class="w-full bg-primary text-white font-bold py-2 mt-4 text-sm hover:bg-primaryHover transition shadow-sm">
+                            VIEW SCHEDULE
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Row: Notifications & Portal Summary -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Notifications & Alerts -->
+                <div class="bg-white shadow-sm border border-gray-100 p-6 lg:col-span-2">
+                    <h3 class="text-lg font-bold text-primary uppercase mb-4 pb-2 border-b-2 border-black inline-block">Notifications & Alerts</h3>
+
+                    <div class="space-y-3 mt-2">
+                        {% for notification in data.notifications %}
+                        <div class="border border-gray-200 p-3 text-sm">
+                            {{ notification }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Portal Summary -->
+                <div class="bg-white shadow-sm border border-gray-100 p-6">
+                    <h3 class="text-lg font-bold text-primary uppercase mb-4 pb-2 border-b-2 border-black inline-block">Portal Summary</h3>
+
+                    <div class="mt-2 space-y-6">
+                        <!-- Accommodation -->
+                        <div>
+                            <p class="text-xs font-bold text-gray-500 uppercase mb-2">Allotted Accommodation</p>
+                            <div class="bg-gray-50 p-3 flex justify-between items-center border border-gray-100">
+                                <p class="font-bold text-sm">{{ data.hostel_block }} &bull; Room {{ data.hostel_room }}</p>
+                                <p class="text-xs text-gray-500 font-medium">{{ data.hostel_floor }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Pending Applications -->
+                        <div>
+                            <p class="text-xs font-bold text-gray-500 uppercase mb-2">Pending Applications</p>
+                            <div class="bg-gray-50 p-3 flex justify-between items-center border border-gray-100">
+                                <p class="font-bold text-sm">{{ data.active_submissions }} Active Submissions</p>
+                                <a href="#" class="text-xs font-bold text-black underline underline-offset-2">Review</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+{% endblock %}

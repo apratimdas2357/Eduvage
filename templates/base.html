@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Eduvage{% endblock %}</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3a358c', // Deep purple from the design
+                        primaryHover: '#2a256a',
+                        secondary: '#f7f7fa', // Light gray background
+                        accent: '#473ca5'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'], // Assuming a clean sans-serif like Inter
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Add some global styles here if necessary */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa; /* slightly different gray as fallback */
+        }
+    </style>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    {% block head %}{% endblock %}
+</head>
+<body class="bg-[#f8f9fa] text-gray-800 antialiased h-screen flex flex-col">
+    {% block content %}
+    {% endblock %}
+
+    {% block scripts %}
+    {% endblock %}
+</body>
+</html>
