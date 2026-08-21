@@ -31,15 +31,18 @@
         </div>
 
         <!-- Form -->
-        <form action="/dashboard" method="GET" class="w-full max-w-sm">
+        <form action="/" method="POST" class="w-full max-w-sm">
             <div class="flex items-end mb-8 space-x-4">
                 <div class="w-full border-b border-black">
-                    <input type="text" placeholder="Enter User ID" class="w-full py-2 outline-none text-lg bg-transparent" required>
+                    <input type="text" name="user_id" placeholder="Enter User ID (e.g. 21CS1042)" class="w-full py-2 outline-none text-lg bg-transparent" required>
                 </div>
                 <button type="submit" class="bg-primary text-white font-bold py-3 px-8 text-xl rounded-sm hover:bg-primaryHover transition">
                     Login
                 </button>
             </div>
+            {% if error %}
+            <p class="text-red-500 text-sm mt-2">{{ error }}</p>
+            {% endif %}
         </form>
 
         <!-- Links -->

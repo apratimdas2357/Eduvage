@@ -137,7 +137,7 @@
                                 <tr class="border-b border-gray-100 last:border-0 hover:bg-gray-50">
                                     <td class="py-3 font-medium">{{ mark.subject }}</td>
                                     <td class="py-3 font-bold text-primary">{{ mark.obtained }}/100</td>
-                                    <td class="py-3 font-bold text-right text-green-600">{{ mark.status }}</td>
+                                    <td class="py-3 font-bold text-right {% if mark.status == 'Pass' %}text-green-600{% else %}text-red-600{% endif %}">{{ mark.status }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
