@@ -2,50 +2,67 @@ import os
 from flask import Flask, render_template, request, redirect, url_for, session
 from supabase_client import get_supabase
 
+import hashlib
+
 app = Flask(__name__)
-app.secret_key = os.urandom(24)
+# Try to get secret key from env to persist sessions across workers/restarts, otherwise fallback to random
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', os.urandom(24))
+
+def verify_password(stored_password, provided_password):
+    # For a real application, you must use something like werkzeug.security.check_password_hash
+    # But because our schema defines password_hash and we don't know the exact hashing mechanism used externally,
+    # we will just do a direct comparison if it's plain text, or try a simple sha256.
+    # The ideal scenario is that the registration system puts properly hashed passwords using bcrypt/werkzeug.
+    if stored_password == provided_password:
+        return True
+
+    # Try basic SHA-256 hash in case the database actually stores sha256 hashes of the password
+    # (Just a fallback to make it slightly more robust for a prototype)
+    hashed_provided = hashlib.sha256(provided_password.encode('utf-8')).hexdigest()
+    if stored_password == hashed_provided:
+        return True
+
+    return False
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         user_id = request.form.get('user_id')
+        password = request.form.get('password')
 
-        # If user_id starts with something like a roll number, we'll try to find the student
         try:
             supabase = get_supabase()
 
-            # Simple simulation: just check if the student exists by roll number or email
-            response = supabase.table('students').select('*').eq('roll_number', user_id).execute()
-
-            if response.data:
-                # Login successful
-                session['student_id'] = response.data[0]['id']
-                return redirect(url_for('dashboard'))
-
-            # Fallback to email search via profiles for teachers/admins or students
+            # 1. Search by email directly in profiles
             prof_resp = supabase.table('profiles').select('*').eq('email', user_id).execute()
-            if prof_resp.data:
-                profile_id = prof_resp.data[0]['id']
-                role = prof_resp.data[0]['role']
 
+            # 2. If not found by email, try searching students by roll_number to get profile_id
+            if not prof_resp.data:
+                student_search = supabase.table('students').select('profile_id').eq('roll_number', user_id).execute()
+                if student_search.data:
+                    prof_resp = supabase.table('profiles').select('*').eq('id', student_search.data[0]['profile_id']).execute()
+
+            if prof_resp.data:
+                profile = prof_resp.data[0]
+
+                # Check password
+                stored_hash = profile.get('password_hash')
+                if not stored_hash or not verify_password(stored_hash, password):
+                    return render_template('login.html', error="Invalid Password.")
+
+                role = profile.get('role')
                 if role == 'student':
-                    student_resp = supabase.table('students').select('*').eq('profile_id', profile_id).execute()
+                    student_resp = supabase.table('students').select('*').eq('profile_id', profile['id']).execute()
                     if student_resp.data:
                         session['student_id'] = student_resp.data[0]['id']
                         return redirect(url_for('dashboard'))
 
-                # Currently only handling student dashboard properly, but can extend later
                 return render_template('login.html', error=f"Role '{role}' login not fully implemented. Please login as a student.")
 
-            return render_template('login.html', error="Invalid User ID. Please try again.")
+            return render_template('login.html', error="Invalid User ID.")
 
         except Exception as e:
-            # Handle the case where supabase isn't properly configured or there's an error
             print(f"Supabase error: {e}")
-            # Fallback for testing when db is empty/unavailable, to preserve existing functionality:
-            if user_id.upper() == '21CS1042':
-                session['student_id'] = 'dummy_id'
-                return redirect(url_for('dashboard'))
             return render_template('login.html', error="Database error. Please try again later.")
 
     return render_template('login.html')
@@ -78,7 +95,7 @@ def dashboard():
         att_resp = supabase.table('attendance').select('status').eq('student_id', student_id).execute()
         total_classes = len(att_resp.data)
         present_classes = sum(1 for a in att_resp.data if a['status'] == 'present')
-        attendance_percentage = str(round((present_classes / total_classes * 100) if total_classes > 0 else 87))
+        attendance_percentage = str(round((present_classes / total_classes * 100) if total_classes > 0 else 0))
 
         # 4. Get Marks
         marks_resp = supabase.table('marks').select('*, subjects(subject_name)').eq('student_id', student_id).execute()
@@ -90,6 +107,13 @@ def dashboard():
                 "obtained": mark.get('marks_obtained'),
                 "status": status
             })
+
+        cgpa = "N/A"
+        if len(marks_resp.data) > 0:
+            total_marks = sum(mark.get('marks_obtained', 0) for mark in marks_resp.data)
+            max_marks = sum(mark.get('max_marks', 100) for mark in marks_resp.data)
+            # Rough CGPA estimation for demonstration since it's not directly in DB
+            cgpa = str(round((total_marks / max_marks) * 10, 2))
 
         # 5. Get Fees
         fees_resp = supabase.table('fees').select('*').eq('student_id', student_id).execute()
@@ -107,32 +131,42 @@ def dashboard():
         app_resp = supabase.table('applications').select('id').eq('student_id', student_id).eq('status', 'pending').execute()
         active_submissions = str(len(app_resp.data))
 
+        # 9. Upcoming Exams
+        exams_resp = supabase.table('exams').select('*').execute()
+        # Since 'upcoming exams' specific data structure doesn't fully match schema fields like 'time' and 'date' for subject level exams directly,
+        # we will extract from exams table. This schema just has exam_name and academic year.
+        upcoming_exams = []
+        if exams_resp.data:
+            for exam in exams_resp.data[:3]: # Limit to 3
+                upcoming_exams.append({"subject": exam.get('exam_name', 'Exam'), "date": exam.get('academic_year', 'TBD'), "time": "TBD"})
+
+        next_exam_date = upcoming_exams[0]['date'] if upcoming_exams else "N/A"
+        next_exam_subject = upcoming_exams[0]['subject'] if upcoming_exams else "N/A"
+
         # Assemble data dictionary matching template structure
         full_name = student_data.get('full_name', 'Student')
         first_name = full_name.split(' ')[0]
         initials = ''.join([n[0] for n in full_name.split(' ') if n])[:2].upper()
 
+        # Use an env variable for college name or fallback
+        college_name = os.environ.get("COLLEGE_NAME", "Eduvage University")
+
         data = {
-            "college_name": "Kalyani Government Engineering College", # Hardcoded or from settings
-            "course": acad_data.get('course', 'B.Tech Information Technology'),
-            "semester": str(acad_data.get('semester', '6')),
+            "college_name": college_name,
+            "course": acad_data.get('course', 'N/A') if acad_data else 'N/A',
+            "semester": str(acad_data.get('semester', 'N/A')) if acad_data else 'N/A',
             "user_name": full_name,
             "roll_no": student_data.get('roll_number', ''),
             "user_initials": initials,
             "first_name": first_name,
             "attendance": attendance_percentage,
-            "cgpa": "8.42", # CGPA usually calculated from all past marks
+            "cgpa": cgpa,
             "fees_due": str(fees_data.get('due_amount', '0')),
             "fees_due_date": str(fees_data.get('due_date', 'N/A')),
-            "next_exam_date": "28 June", # Placeholder for exam schedule logic
-            "next_exam_subject": "Data Structures Lab",
-            "recent_marks": recent_marks if recent_marks else [
-                {"subject": "Computer Networks", "obtained": "78", "status": "Pass"},
-                {"subject": "DBMS", "obtained": "85", "status": "Pass"}
-            ],
-            "upcoming_exams": [ # Placeholder as exam schedule isn't fully detailed in simple schema
-                {"subject": "Data Structures Lab", "date": "28 June 2024", "time": "10:00 AM"}
-            ],
+            "next_exam_date": next_exam_date,
+            "next_exam_subject": next_exam_subject,
+            "recent_marks": recent_marks,
+            "upcoming_exams": upcoming_exams,
             "notifications": notifications if notifications else ["No new notifications."],
             "hostel_block": hostel_data.get('block', 'N/A'),
             "hostel_room": hostel_data.get('room_number', 'N/A'),
@@ -142,44 +176,7 @@ def dashboard():
 
     except Exception as e:
         print(f"Supabase dashboard error: {e}")
-        # Fallback to dummy data if DB isn't setup properly yet
-        data = {
-            "college_name": "Kalyani Government Engineering College",
-            "course": "B.Tech Information Technology",
-            "semester": "6",
-            "user_name": "Arjun Mehta",
-            "roll_no": "21CS1042",
-            "user_initials": "AM",
-            "first_name": "Apratim",
-            "attendance": "87",
-            "cgpa": "8.42",
-            "fees_due": "45,000",
-            "fees_due_date": "10 July",
-            "next_exam_date": "28 June",
-            "next_exam_subject": "Data Structures Lab",
-            "recent_marks": [
-                {"subject": "Computer Networks", "obtained": "78", "status": "Pass"},
-                {"subject": "DBMS", "obtained": "85", "status": "Pass"},
-                {"subject": "Operating Systems", "obtained": "92", "status": "Pass"},
-                {"subject": "Design & Analysis of Algorithms", "obtained": "71", "status": "Pass"},
-                {"subject": "Software Engineering", "obtained": "88", "status": "Pass"}
-            ],
-            "upcoming_exams": [
-                {"subject": "Data Structures Lab", "date": "28 June 2024", "time": "10:00 AM"},
-                {"subject": "Compiler Design", "date": "02 July 2024", "time": "02:00 PM"},
-                {"subject": "Artificial Intelligence", "date": "05 July 2024", "time": "10:00 AM"}
-            ],
-            "notifications": [
-                "Semester Fee payment deadline extended to July 10, 2024.",
-                "End Semester practical exam schedule has been released.",
-                "Block C Hostel maintenance scheduled for Saturday morning.",
-                "Library Book 'Introduction to Algorithms' is due back."
-            ],
-            "hostel_block": "Block C",
-            "hostel_room": "312",
-            "hostel_floor": "3rd Floor",
-            "active_submissions": "2"
-        }
+        return render_template('login.html', error="Failed to fetch dashboard data. Please log in again.")
 
     return render_template('dashboard.html', data=data)
 

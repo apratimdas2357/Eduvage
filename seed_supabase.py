@@ -19,6 +19,7 @@ def seed():
         # Seed Profile
         profile_data = {
             "email": "apratim@example.com",
+            "password_hash": "password123", # Explicit password for dummy testing
             "role": "student"
         }
         # Insert profile
