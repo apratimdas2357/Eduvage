@@ -93,7 +93,8 @@ def login():
             print(f"Supabase error: {e}")
             return render_template('login.html', error="Database error. Please try again later.")
 
-    return render_template('login.html')
+    error = request.args.get('error')
+    return render_template('login.html', error=error)
 
 @app.route('/dashboard')
 @requires_role('student')

@@ -40,10 +40,11 @@
                 <h2 class="text-xl font-semibold">Admin Dashboard</h2>
             </div>
             <div class="flex items-center space-x-4">
+                <a href="{{ url_for('logout') }}" class="md:hidden text-sm font-medium text-gray-500 hover:text-red-500 transition mr-2">Logout</a>
                 <div class="bg-primary text-white w-10 h-10 rounded-full flex items-center justify-center font-bold">
                     {{ data.user_initials }}
                 </div>
-                <div class="hidden sm:block">
+                <div class="hidden sm:block text-right">
                     <p class="font-medium text-sm leading-tight">{{ data.user_name }}</p>
                     <p class="text-xs text-gray-500">Administrator</p>
                 </div>
