@@ -1,4 +1,5 @@
 import os
+from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, session
 from supabase_client import get_supabase
 
@@ -7,6 +8,17 @@ import hashlib
 app = Flask(__name__)
 # Try to get secret key from env to persist sessions across workers/restarts, otherwise fallback to random
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', os.urandom(24))
+
+def requires_role(role_name):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            user_role = session.get('role')
+            if not user_role or user_role != role_name:
+                return redirect(url_for('login', error="Unauthorized access. Please login with correct role."))
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
 
 def verify_password(stored_password, provided_password):
     # For a real application, you must use something like werkzeug.security.check_password_hash
@@ -84,6 +96,7 @@ def login():
     return render_template('login.html')
 
 @app.route('/dashboard')
+@requires_role('student')
 def dashboard():
     student_id = session.get('student_id')
     if not student_id:
@@ -197,9 +210,10 @@ def dashboard():
     return render_template('dashboard.html', data=data)
 
 @app.route('/teacher_dashboard')
+@requires_role('teacher')
 def teacher_dashboard():
     teacher_id = session.get('teacher_id')
-    if not teacher_id or session.get('role') != 'teacher':
+    if not teacher_id:
         return redirect(url_for('login'))
 
     try:
@@ -213,9 +227,9 @@ def teacher_dashboard():
 
         teacher_data = teacher_resp.data[0]
 
-        # Get Subjects taught by teacher
-        subjects_resp = supabase.table('subjects').select('*').eq('teacher_id', teacher_id).execute()
-        subjects = subjects_resp.data
+        # Get Subjects taught by teacher via teacher_subjects
+        ts_resp = supabase.table('teacher_subjects').select('subject_id, subjects(*)').eq('teacher_id', teacher_id).execute()
+        subjects = [ts.get('subjects') for ts in ts_resp.data if ts.get('subjects')]
 
         # We need a list of students to mark attendance/marks for the subjects taught
         # For simplicity, let's just get all students
@@ -239,9 +253,10 @@ def teacher_dashboard():
     return render_template('teacher_dashboard.html', data=data)
 
 @app.route('/admin_dashboard')
+@requires_role('admin')
 def admin_dashboard():
     admin_id = session.get('admin_id')
-    if not admin_id or session.get('role') != 'admin':
+    if not admin_id:
         return redirect(url_for('login'))
 
     try:
@@ -262,10 +277,8 @@ def admin_dashboard():
     return render_template('admin_dashboard.html', data=data)
 
 @app.route('/update_marks', methods=['POST'])
+@requires_role('teacher')
 def update_marks():
-    if session.get('role') != 'teacher':
-        return redirect(url_for('login'))
-
     student_id = request.form.get('student_id')
     subject_id = request.form.get('subject_id')
     marks_obtained = request.form.get('marks_obtained')
