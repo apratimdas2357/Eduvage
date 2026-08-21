@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Eduvage - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="flex h-screen bg-gray-50 overflow-hidden">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-gray-900 text-white flex flex-col justify-between hidden md:flex">
+        <div class="p-6">
+            <div class="flex items-center space-x-2 mb-10">
+                <div class="bg-primary text-white w-8 h-8 rounded-sm flex items-center justify-center font-bold text-lg">E</div>
+                <span class="text-xl font-bold tracking-tight">Eduvage Admin</span>
+            </div>
+
+            <nav class="space-y-2">
+                <a href="#" class="flex items-center space-x-3 bg-gray-800 px-4 py-3 rounded-lg">
+                    <span>Overview</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 hover:bg-gray-800 rounded-lg transition">
+                    <span>User Management</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 hover:bg-gray-800 rounded-lg transition">
+                    <span>System Settings</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="p-6">
+            <a href="{{ url_for('logout') }}" class="flex items-center space-x-3 text-gray-400 hover:text-white transition px-4 py-2">
+                <span>Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto">
+        <!-- Header -->
+        <header class="bg-white shadow-sm px-8 py-4 flex justify-between items-center sticky top-0 z-10">
+            <div>
+                <h2 class="text-xl font-semibold">Admin Dashboard</h2>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="bg-primary text-white w-10 h-10 rounded-full flex items-center justify-center font-bold">
+                    {{ data.user_initials }}
+                </div>
+                <div class="hidden sm:block">
+                    <p class="font-medium text-sm leading-tight">{{ data.user_name }}</p>
+                    <p class="text-xs text-gray-500">Administrator</p>
+                </div>
+            </div>
+        </header>
+
+        <div class="p-8">
+            <h1 class="text-3xl font-bold mb-8">System Overview</h1>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                    <h3 class="text-lg font-bold">All Users (Profiles)</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created At</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for profile in data.profiles %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ profile.id[:8] }}...</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ profile.email }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if profile.role == 'admin' %}bg-red-100 text-red-800{% elif profile.role == 'teacher' %}bg-blue-100 text-blue-800{% else %}bg-green-100 text-green-800{% endif %}">
+                                        {{ profile.role }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ profile.created_at[:10] }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}

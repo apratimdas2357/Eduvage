@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Eduvage - Teacher Dashboard{% endblock %}
+
+{% block content %}
+<div class="flex h-screen bg-gray-50 overflow-hidden">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-r border-gray-200 flex flex-col justify-between hidden md:flex">
+        <div class="p-6">
+            <div class="flex items-center space-x-2 mb-10">
+                <div class="bg-primary text-white w-8 h-8 rounded-sm flex items-center justify-center font-bold text-lg">E</div>
+                <span class="text-xl font-bold tracking-tight">Eduvage</span>
+            </div>
+
+            <nav class="space-y-4 text-gray-500 font-medium">
+                <a href="#" class="flex items-center space-x-3 text-primary bg-purple-50 px-4 py-2 rounded-lg">
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-2 hover:bg-gray-50 rounded-lg transition">
+                    <span>Students</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-2 hover:bg-gray-50 rounded-lg transition">
+                    <span>Classes</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-2 hover:bg-gray-50 rounded-lg transition">
+                    <span>Assignments</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="p-6">
+            <a href="{{ url_for('logout') }}" class="flex items-center space-x-3 text-gray-500 hover:text-red-500 transition px-4 py-2">
+                <span>Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto">
+        <!-- Header -->
+        <header class="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center sticky top-0 z-10">
+            <div>
+                <h2 class="text-xl font-semibold">Teacher Dashboard</h2>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="bg-primary text-white w-10 h-10 rounded-full flex items-center justify-center font-bold">
+                    {{ data.user_initials }}
+                </div>
+                <div class="hidden sm:block">
+                    <p class="font-medium text-sm leading-tight">{{ data.user_name }}</p>
+                    <p class="text-xs text-gray-500">Teacher</p>
+                </div>
+            </div>
+        </header>
+
+        <div class="p-8">
+            <h1 class="text-3xl font-bold mb-8">Welcome back, {{ data.user_name }}</h1>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Update Marks Form -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 class="text-xl font-bold mb-4">Update Student Marks</h3>
+                    <form action="{{ url_for('update_marks') }}" method="POST" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Student</label>
+                            <select name="student_id" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md border" required>
+                                {% for student in data.students %}
+                                <option value="{{ student.id }}">{{ student.full_name }} ({{ student.roll_number }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Subject</label>
+                            <select name="subject_id" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md border" required>
+                                {% for subject in data.subjects %}
+                                <option value="{{ subject.id }}">{{ subject.subject_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Marks Obtained (out of 100)</label>
+                            <input type="number" name="marks_obtained" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" required>
+                        </div>
+                        <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primaryHover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                            Update Marks
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Assigned Subjects -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 class="text-xl font-bold mb-4">Your Subjects</h3>
+                    {% if data.subjects %}
+                    <ul class="space-y-4">
+                        {% for subject in data.subjects %}
+                        <li class="flex justify-between items-center bg-gray-50 p-4 rounded-xl">
+                            <span class="font-medium">{{ subject.subject_name }}</span>
+                            <span class="text-sm text-gray-500">Credits: {{ subject.credits }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-gray-500">No subjects assigned yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}

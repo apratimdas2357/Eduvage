@@ -51,13 +51,29 @@ def login():
                     return render_template('login.html', error="Invalid Password.")
 
                 role = profile.get('role')
+                # Role check from form
+                expected_role = request.form.get('role')
+                if role != expected_role:
+                    return render_template('login.html', error=f"User is not a {expected_role}.")
+
                 if role == 'student':
                     student_resp = supabase.table('students').select('*').eq('profile_id', profile['id']).execute()
                     if student_resp.data:
                         session['student_id'] = student_resp.data[0]['id']
+                        session['role'] = 'student'
                         return redirect(url_for('dashboard'))
+                elif role == 'teacher':
+                    teacher_resp = supabase.table('teachers').select('*').eq('profile_id', profile['id']).execute()
+                    if teacher_resp.data:
+                        session['teacher_id'] = teacher_resp.data[0]['id']
+                        session['role'] = 'teacher'
+                        return redirect(url_for('teacher_dashboard'))
+                elif role == 'admin':
+                    session['admin_id'] = profile['id']
+                    session['role'] = 'admin'
+                    return redirect(url_for('admin_dashboard'))
 
-                return render_template('login.html', error=f"Role '{role}' login not fully implemented. Please login as a student.")
+                return render_template('login.html', error=f"Role '{role}' login failed to retrieve profile.")
 
             return render_template('login.html', error="Invalid User ID.")
 
@@ -179,6 +195,104 @@ def dashboard():
         return render_template('login.html', error="Failed to fetch dashboard data. Please log in again.")
 
     return render_template('dashboard.html', data=data)
+
+@app.route('/teacher_dashboard')
+def teacher_dashboard():
+    teacher_id = session.get('teacher_id')
+    if not teacher_id or session.get('role') != 'teacher':
+        return redirect(url_for('login'))
+
+    try:
+        supabase = get_supabase()
+
+        # Get Teacher details
+        teacher_resp = supabase.table('teachers').select('*').eq('id', teacher_id).execute()
+
+        if not teacher_resp.data:
+            raise Exception("Teacher not found")
+
+        teacher_data = teacher_resp.data[0]
+
+        # Get Subjects taught by teacher
+        subjects_resp = supabase.table('subjects').select('*').eq('teacher_id', teacher_id).execute()
+        subjects = subjects_resp.data
+
+        # We need a list of students to mark attendance/marks for the subjects taught
+        # For simplicity, let's just get all students
+        students_resp = supabase.table('students').select('id, full_name, roll_number').execute()
+        students = students_resp.data
+
+        full_name = teacher_data.get('full_name', 'Teacher')
+        initials = ''.join([n[0] for n in full_name.split(' ') if n])[:2].upper()
+
+        data = {
+            "user_name": full_name,
+            "user_initials": initials,
+            "subjects": subjects,
+            "students": students,
+        }
+
+    except Exception as e:
+        print(f"Supabase teacher dashboard error: {e}")
+        return render_template('login.html', error="Failed to fetch dashboard data.")
+
+    return render_template('teacher_dashboard.html', data=data)
+
+@app.route('/admin_dashboard')
+def admin_dashboard():
+    admin_id = session.get('admin_id')
+    if not admin_id or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+
+    try:
+        supabase = get_supabase()
+        # Admin can view all users
+        profiles_resp = supabase.table('profiles').select('*').execute()
+        profiles = profiles_resp.data
+
+        data = {
+            "user_name": "Admin User",
+            "user_initials": "AD",
+            "profiles": profiles
+        }
+    except Exception as e:
+        print(f"Supabase admin dashboard error: {e}")
+        return render_template('login.html', error="Failed to fetch admin data.")
+
+    return render_template('admin_dashboard.html', data=data)
+
+@app.route('/update_marks', methods=['POST'])
+def update_marks():
+    if session.get('role') != 'teacher':
+        return redirect(url_for('login'))
+
+    student_id = request.form.get('student_id')
+    subject_id = request.form.get('subject_id')
+    marks_obtained = request.form.get('marks_obtained')
+
+    try:
+        supabase = get_supabase()
+        # Upsert or Insert marks. Let's try to update if exists, else insert.
+        # But for simplicity in this prototype, just insert a new record or update by filtering
+        existing = supabase.table('marks').select('*').eq('student_id', student_id).eq('subject_id', subject_id).execute()
+        if existing.data:
+            supabase.table('marks').update({'marks_obtained': marks_obtained}).eq('id', existing.data[0]['id']).execute()
+        else:
+            supabase.table('marks').insert({
+                'student_id': student_id,
+                'subject_id': subject_id,
+                'marks_obtained': marks_obtained,
+                'max_marks': 100
+            }).execute()
+    except Exception as e:
+        print(f"Error updating marks: {e}")
+
+    return redirect(url_for('teacher_dashboard'))
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

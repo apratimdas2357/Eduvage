@@ -16,14 +16,15 @@
         <h1 class="text-4xl lg:text-5xl font-bold mb-4">Welcome back,</h1>
 
         <!-- Role Tabs -->
-        <div class="flex space-x-4 text-2xl lg:text-3xl font-bold mb-10 border-b border-gray-200 pb-2 w-max">
-            <a href="#" class="text-black border-b-4 border-black pb-1">Teacher</a>
-            <a href="#" class="text-gray-400 hover:text-gray-600 transition">Student</a>
-            <a href="#" class="text-gray-400 hover:text-gray-600 transition">Admin</a>
+        <div class="flex space-x-4 text-2xl lg:text-3xl font-bold mb-10 border-b border-gray-200 pb-2 w-max" id="roleTabs">
+            <a href="#" data-role="teacher" class="role-tab text-gray-400 hover:text-gray-600 transition pb-1">Teacher</a>
+            <a href="#" data-role="student" class="role-tab text-black border-b-4 border-black pb-1">Student</a>
+            <a href="#" data-role="admin" class="role-tab text-gray-400 hover:text-gray-600 transition pb-1">Admin</a>
         </div>
 
         <!-- Form -->
         <form action="/" method="POST" class="w-full max-w-sm">
+            <input type="hidden" name="role" id="roleInput" value="student">
             <div class="mb-4">
                 <div class="w-full border-b border-black">
                     <input type="text" name="user_id" placeholder="Enter User ID (Email or Roll No)" class="w-full py-2 outline-none text-lg bg-transparent" required>
@@ -48,6 +49,30 @@
         </div>
 
     </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const tabs = document.querySelectorAll('.role-tab');
+        const roleInput = document.getElementById('roleInput');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                e.preventDefault();
+
+                // Reset all tabs
+                tabs.forEach(t => {
+                    t.className = 'role-tab text-gray-400 hover:text-gray-600 transition pb-1';
+                });
+
+                // Set active tab
+                tab.className = 'role-tab text-black border-b-4 border-black pb-1';
+
+                // Update hidden input
+                roleInput.value = tab.getAttribute('data-role');
+            });
+        });
+    });
+</script>
 
     <!-- Right Panel (Geometric Shapes) -->
     <div class="hidden md:flex md:w-1/2 bg-white relative overflow-hidden h-full items-center justify-center">
