@@ -3,3 +3,4 @@ gunicorn==21.2.0
 supabase
 python-dotenv
 psycopg2-binary
+requests

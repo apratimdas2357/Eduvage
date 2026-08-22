@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}Eduvage - My Profile{% endblock %}
+
+{% block content %}
+<div class="flex h-screen bg-[#f7f7f7] overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 flex-shrink-0 hidden md:flex flex-col relative h-full z-20" style="background-color: #3b378f;">
+        <div class="p-6 flex items-center space-x-4 mt-2">
+            <div class="bg-white rounded-lg p-2 w-12 h-12 flex items-center justify-center">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Eduvage Logo" class="w-full h-auto object-contain">
+            </div>
+            <div>
+                <h2 class="text-2xl font-bold tracking-wider text-white mb-0 leading-none">EDUVAGE</h2>
+                <p class="text-xs text-gray-300 uppercase tracking-widest mt-1">Student Portal</p>
+            </div>
+        </div>
+
+        <nav class="mt-8 flex-1 z-10 relative">
+            <ul class="space-y-4">
+                <li><a href="{{ url_for('dashboard') }}" class="block py-2 px-8 hover:text-white text-gray-300 transition border-l-4 border-transparent text-lg">Dashboard</a></li>
+                <li><a href="{{ url_for('student_profile') }}" class="block py-2 px-8 font-bold text-lg text-white border-l-4 border-white" style="background-color: #272473;">My Profile</a></li>
+                <li><a href="{{ url_for('attendance') }}" class="block py-2 px-8 hover:text-white text-gray-300 transition border-l-4 border-transparent text-lg">Attendance</a></li>
+                <li><a href="{{ url_for('marks') }}" class="block py-2 px-8 hover:text-white text-gray-300 transition border-l-4 border-transparent text-lg">Marks & Results</a></li>
+                <li><a href="{{ url_for('fees') }}" class="block py-2 px-8 hover:text-white text-gray-300 transition border-l-4 border-transparent text-lg">Fees & Payments</a></li>
+                <li><a href="{{ url_for('hostel') }}" class="block py-2 px-8 hover:text-white text-gray-300 transition border-l-4 border-transparent text-lg">Hostel</a></li>
+                <li><a href="{{ url_for('applications') }}" class="block py-2 px-8 hover:text-white text-gray-300 transition border-l-4 border-transparent text-lg">Applications</a></li>
+                <li><a href="{{ url_for('notifications') }}" class="block py-2 px-8 hover:text-white text-gray-300 transition border-l-4 border-transparent text-lg">Notifications</a></li>
+                <li><a href="{{ url_for('settings') }}" class="block py-2 px-8 hover:text-white text-gray-300 transition border-l-4 border-transparent text-lg">Settings</a></li>
+            </ul>
+        </nav>
+
+        <div class="p-8 mb-4 z-10 relative mt-auto">
+            <a href="{{ url_for('logout') }}" class="text-gray-300 hover:text-white transition flex items-center gap-2 text-lg">
+                Logout
+            </a>
+        </div>
+
+        <!-- Bottom right triangle pattern exactly like image -->
+        <div class="absolute bottom-0 left-0 w-full h-32 overflow-hidden z-0 pointer-events-none">
+            <div class="absolute bottom-0 left-0 w-0 h-0 border-b-[128px] border-r-[128px] border-b-[#2c2975] border-r-transparent"></div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col h-full overflow-hidden">
+
+        <!-- Top Navbar matching image -->
+        <header class="bg-white border-b border-gray-200 px-6 lg:px-10 py-4 flex justify-between items-center flex-shrink-0 shadow-sm relative z-10">
+            <!-- Mobile Menu Button -->
+            <button class="md:hidden text-primary">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+
+            <div class="hidden md:flex flex-col">
+                <h2 class="text-xl font-bold" style="color: #3b378f;">{{ data.college_name }}</h2>
+                <p class="text-sm text-gray-500">{{ data.course }} {{ data.department }} &bull; Semester {{ data.semester }}</p>
+            </div>
+
+            <div class="flex items-center gap-4 text-right">
+                <a href="{{ url_for('logout') }}" class="md:hidden text-sm font-medium text-gray-500 hover:text-red-500 transition mr-2">Logout</a>
+                <div class="hidden sm:block">
+                    <p class="text-sm font-bold text-gray-800">{{ data.user_name }}</p>
+                    <p class="text-xs text-gray-500">Roll No: {{ data.roll_no }}</p>
+                </div>
+                <div class="w-10 h-10 text-white flex items-center justify-center font-bold text-lg rounded-sm shadow-sm" style="background-color: #3b378f;">
+                    {{ data.user_initials }}
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Scrollable Area -->
+        <main class="flex-1 overflow-y-auto p-6 lg:p-12 relative z-0">
+
+            <div class="mb-10">
+                <h1 class="text-4xl font-bold text-gray-900 border-b-[3px] border-[#3b378f] inline-block pb-2 mb-8">My Student Profile</h1>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl">
+                <!-- Personal Details -->
+                <div class="bg-white rounded-sm shadow-sm border border-gray-200 p-8">
+                    <div class="flex justify-between items-center mb-6 border-b-[2px] border-[#3b378f] pb-2">
+                        <h2 class="text-lg font-bold text-[#3b378f] uppercase">Personal Details</h2>
+                        <a href="#" class="text-sm font-bold text-[#3b378f] underline underline-offset-4">Request Edit</a>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="border-b border-gray-100 pb-2">
+                            <p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Full Name</p>
+                            <p class="text-base font-medium text-gray-900">{{ data.user_name }}</p>
+                        </div>
+                        <div class="border-b border-gray-100 pb-2">
+                            <p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Date of Birth</p>
+                            <p class="text-base font-medium text-gray-900">{{ data.dob }}</p>
+                        </div>
+                        <div class="border-b border-gray-100 pb-2">
+                            <p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Gender</p>
+                            <p class="text-base font-medium text-gray-900">N/A</p> <!-- Not in schema -->
+                        </div>
+                        <div class="border-b border-gray-100 pb-2">
+                            <p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Blood Group</p>
+                            <p class="text-base font-medium text-gray-900">N/A</p> <!-- Not in schema -->
+                        </div>
+                        <div class="border-b border-gray-100 pb-2">
+                            <p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Phone Number</p>
+                            <p class="text-base font-medium text-gray-900">{{ data.phone }}</p>
+                        </div>
+                        <div class="border-b border-gray-100 pb-2">
+                            <p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Official Email</p>
+                            <p class="text-base font-medium text-gray-900">{{ data.email }}</p>
+                        </div>
+                        <div class="border-b border-gray-100 pb-2">
+                            <p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Permanent Address</p>
+                            <p class="text-base font-medium text-gray-900">{{ data.address }}</p>
+                        </div>
+                        <div class="border-b border-gray-100 pb-2">
+                            <p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Parent / Guardian</p>
+                            <p class="text-base font-medium text-gray-900">{{ data.emergency_contact }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Academic Record -->
+                <div class="bg-white rounded-sm shadow-sm border border-gray-200 p-8">
+                    <div class="flex justify-between items-center mb-6 border-b-[2px] border-[#3b378f] pb-2">
+                        <h2 class="text-lg font-bold text-[#3b378f] uppercase">Academic Record</h2>
+                        <a href="#" class="text-sm font-bold text-[#3b378f] underline underline-offset-4">Print ID Card</a>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="border-b border-gray-100 pb-2">
+                            <p class="text-[10px] text-gray-500 font-bold uppercase mb-1">University Roll Number</p>
+                            <p class="text-base font-medium text-gray-900">{{ data.roll_no }}</p>
+                        </div>
+                        <div class="border-b border-gray-100 pb-2">
+                            <p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Registered Program</p>
+                            <p class="text-base font-medium text-gray-900">{{ data.course }}</p>
+                        </div>
+                        <div class="border-b border-gray-100 pb-2">
+                            <p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Academic Branch</p>
+                            <p class="text-base font-medium text-gray-900">{{ data.department }}</p>
+                        </div>
+                        <div class="border-b border-gray-100 pb-2">
+                            <p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Current Semester</p>
+                            <p class="text-base font-medium text-gray-900">Semester {{ data.semester }}</p>
+                        </div>
+                        <div class="border-b border-gray-100 pb-2">
+                            <p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Assigned Section</p>
+                            <p class="text-base font-medium text-gray-900">Section {{ data.section }}</p>
+                        </div>
+                        <div class="border-b border-gray-100 pb-2">
+                            <p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Year of Admission</p>
+                            <p class="text-base font-medium text-gray-900">{{ data.admission_year }}</p>
+                        </div>
+                        <div class="border-b border-gray-100 pb-2">
+                            <p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Expected Graduation Year</p>
+                            <p class="text-base font-medium text-gray-900">{% if data.admission_year != 'N/A' %}{{ data.admission_year|int + 4 }}{% else %}N/A{% endif %}</p>
+                        </div>
+                        <div class="border-b border-gray-100 pb-2">
+                            <p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Academic Advisor</p>
+                            <p class="text-base font-medium text-gray-900">N/A</p> <!-- Not in schema -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+{% endblock %}
