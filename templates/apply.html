@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Eduvage - Apply{% endblock %}
+
+{% block content %}
+<div class="flex h-screen bg-white">
+
+    <!-- Left Panel (Application Form) -->
+    <div class="w-full md:w-1/2 flex flex-col justify-center px-10 md:px-24 lg:px-32 relative z-10">
+
+        <!-- Logo -->
+        <div class="mb-8">
+            <a href="{{ url_for('login') }}">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Eduvage Logo" class="w-20 h-auto">
+            </a>
+        </div>
+
+        <h1 class="text-4xl lg:text-5xl font-bold mb-4">Start your journey,</h1>
+        <p class="text-gray-500 text-xl mb-10">Apply as a new student.</p>
+
+        <!-- Form -->
+        <form action="{{ url_for('apply') }}" method="POST" class="w-full max-w-sm">
+            <div class="mb-6">
+                <div class="w-full border-b border-black">
+                    <input type="text" name="full_name" placeholder="Full Name" class="w-full py-2 outline-none text-lg bg-transparent" required>
+                </div>
+            </div>
+            <div class="mb-6">
+                <div class="w-full border-b border-black">
+                    <input type="email" name="email" placeholder="Email Address" class="w-full py-2 outline-none text-lg bg-transparent" required>
+                </div>
+            </div>
+            <div class="flex items-end mb-8 space-x-4">
+                <div class="w-full border-b border-black">
+                    <input type="password" name="password" placeholder="Create Password" class="w-full py-2 outline-none text-lg bg-transparent" required>
+                </div>
+                <button type="submit" class="bg-primary text-white font-bold py-3 px-8 text-xl rounded-sm hover:bg-primaryHover transition">
+                    Apply
+                </button>
+            </div>
+            {% if error %}
+            <p class="text-red-500 text-sm mt-2">{{ error }}</p>
+            {% endif %}
+        </form>
+
+        <!-- Links -->
+        <div class="mt-8">
+            <a href="{{ url_for('login') }}" class="text-primary font-bold underline underline-offset-4 hover:text-primaryHover transition">Already have an account? Login</a>
+        </div>
+
+    </div>
+
+    <!-- Right Panel (Geometric Shapes) -->
+    <div class="hidden md:flex md:w-1/2 bg-white relative overflow-hidden h-full items-center justify-center">
+        <!-- Background right side -->
+        <div class="absolute right-0 top-0 w-3/4 h-full bg-primary z-0"></div>
+
+        <!-- Slashes -->
+        <div class="relative z-10 w-full h-full">
+            <svg width="100%" height="100%" viewBox="0 0 800 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                <!-- Large white slash -->
+                <polygon points="600,250 800,100 800,450 600,600" fill="white" />
+
+                <!-- Purple slash crossing it -->
+                <polygon points="400,450 600,250 600,400 400,600" fill="#3a358c" />
+
+                <!-- Bottom white slash -->
+                <polygon points="600,700 800,500 800,800" fill="white" />
+                <!-- More patterns to match roughly the design -->
+                <polygon points="500,600 600,500 600,700 500,800" fill="#3a358c" />
+                <polygon points="600,100 600,300 500,400 500,200" fill="white" />
+            </svg>
+        </div>
+    </div>
+</div>
+{% endblock %}
