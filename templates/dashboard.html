@@ -6,42 +6,40 @@
 <div class="flex h-screen bg-[#f7f7fa] overflow-hidden">
 
     <!-- Sidebar -->
-    <aside class="w-64 bg-primary text-white flex-shrink-0 hidden md:flex flex-col relative h-full">
-        <div class="p-6 flex items-center space-x-3">
-            <div class="bg-white rounded-md p-1">
-                <img src="{{ url_for('static', filename='logo.png') }}" alt="Eduvage Logo" class="w-8 h-8 object-contain">
+    <aside class="w-64 flex-shrink-0 hidden md:flex flex-col relative h-full z-20" style="background-color: #3b378f;">
+        <div class="p-6 flex items-center space-x-4 mt-2">
+            <div class="bg-white rounded-lg p-2 w-12 h-12 flex items-center justify-center">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Eduvage Logo" class="w-full h-auto object-contain">
             </div>
             <div>
-                <h2 class="text-xl font-bold tracking-widest">EDUVAGE</h2>
-                <p class="text-[10px] text-gray-300 uppercase">Student Portal</p>
+                <h2 class="text-2xl font-bold tracking-wider text-white mb-0 leading-none">EDUVAGE</h2>
+                <p class="text-xs text-gray-300 uppercase tracking-widest mt-1">Student Portal</p>
             </div>
         </div>
 
-        <nav class="mt-4 flex-1">
-            <ul class="space-y-1">
-                <li><a href="#" class="block py-3 px-6 hover:bg-primaryHover font-semibold border-l-4 border-white">Dashboard</a></li>
-                <li><a href="#" class="block py-3 px-6 hover:bg-primaryHover text-gray-300 transition border-l-4 border-transparent">My Profile</a></li>
-                <li><a href="#" class="block py-3 px-6 hover:bg-primaryHover text-gray-300 transition border-l-4 border-transparent">Attendance</a></li>
-                <li><a href="#" class="block py-3 px-6 hover:bg-primaryHover text-gray-300 transition border-l-4 border-transparent">Marks & Results</a></li>
-                <li><a href="#" class="block py-3 px-6 hover:bg-primaryHover text-gray-300 transition border-l-4 border-transparent">Fees & Payments</a></li>
-                <li><a href="#" class="block py-3 px-6 hover:bg-primaryHover text-gray-300 transition border-l-4 border-transparent">Hostel</a></li>
-                <li><a href="#" class="block py-3 px-6 hover:bg-primaryHover text-gray-300 transition border-l-4 border-transparent">Applications</a></li>
-                <li><a href="#" class="block py-3 px-6 hover:bg-primaryHover text-gray-300 transition border-l-4 border-transparent">Notifications</a></li>
-                <li><a href="#" class="block py-3 px-6 hover:bg-primaryHover text-gray-300 transition border-l-4 border-transparent">Settings</a></li>
+        <nav class="mt-8 flex-1 z-10 relative">
+            <ul class="space-y-4">
+                <li><a href="{{ url_for('dashboard') }}" class="block py-2 px-8 font-bold text-lg text-white border-l-4 border-white">Dashboard</a></li>
+                <li><a href="{{ url_for('student_page', page_name='profile') }}" class="block py-2 px-8 hover:text-white text-gray-300 transition border-l-4 border-transparent text-lg">My Profile</a></li>
+                <li><a href="{{ url_for('student_page', page_name='attendance') }}" class="block py-2 px-8 hover:text-white text-gray-300 transition border-l-4 border-transparent text-lg">Attendance</a></li>
+                <li><a href="{{ url_for('student_page', page_name='marks') }}" class="block py-2 px-8 hover:text-white text-gray-300 transition border-l-4 border-transparent text-lg">Marks & Results</a></li>
+                <li><a href="{{ url_for('student_page', page_name='fees') }}" class="block py-2 px-8 hover:text-white text-gray-300 transition border-l-4 border-transparent text-lg">Fees & Payments</a></li>
+                <li><a href="{{ url_for('student_page', page_name='hostel') }}" class="block py-2 px-8 hover:text-white text-gray-300 transition border-l-4 border-transparent text-lg">Hostel</a></li>
+                <li><a href="{{ url_for('student_page', page_name='applications') }}" class="block py-2 px-8 hover:text-white text-gray-300 transition border-l-4 border-transparent text-lg">Applications</a></li>
+                <li><a href="{{ url_for('student_page', page_name='notifications') }}" class="block py-2 px-8 hover:text-white text-gray-300 transition border-l-4 border-transparent text-lg">Notifications</a></li>
+                <li><a href="{{ url_for('student_page', page_name='settings') }}" class="block py-2 px-8 hover:text-white text-gray-300 transition border-l-4 border-transparent text-lg">Settings</a></li>
             </ul>
         </nav>
 
-        <div class="p-6 mb-4">
-            <a href="/" class="text-gray-300 hover:text-white transition flex items-center gap-2">
+        <div class="p-8 mb-4 z-10 relative mt-auto">
+            <a href="{{ url_for('logout') }}" class="text-gray-300 hover:text-white transition flex items-center gap-2 text-lg">
                 Logout
             </a>
         </div>
 
-        <!-- Bottom left subtle pattern -->
-        <div class="absolute bottom-0 left-0 w-full h-32 overflow-hidden z-0 opacity-20 pointer-events-none">
-            <svg viewBox="0 0 100 100" class="w-full h-full transform scale-150 translate-y-8 -translate-x-8">
-                <polygon points="0,100 100,0 100,50 0,150" fill="white" />
-            </svg>
+        <!-- Bottom right triangle pattern exactly like image -->
+        <div class="absolute bottom-0 right-0 w-32 h-32 overflow-hidden z-0 pointer-events-none">
+            <div class="absolute bottom-0 right-0 w-0 h-0 border-b-[128px] border-l-[128px] border-b-white opacity-20 border-l-transparent"></div>
         </div>
     </aside>
 

@@ -139,6 +139,12 @@ def login():
     error = request.args.get('error')
     return render_template('login.html', error=error)
 
+@app.route('/student/<page_name>')
+@requires_role('student')
+def student_page(page_name):
+    # This route will handle rendering the various side-bar links for the student portal.
+    return render_template('student_page.html', page_name=page_name.replace('-', ' ').title())
+
 @app.route('/dashboard')
 @requires_role('student')
 def dashboard():
