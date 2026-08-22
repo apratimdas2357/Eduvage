@@ -61,7 +61,8 @@
             </div>
 
             <div class="flex items-center gap-4 text-right">
-                <div>
+                <a href="{{ url_for('logout') }}" class="md:hidden text-sm font-medium text-gray-500 hover:text-red-500 transition mr-2">Logout</a>
+                <div class="hidden sm:block">
                     <p class="text-sm font-bold">{{ data.user_name }}</p>
                     <p class="text-xs text-gray-500">Roll No: {{ data.roll_no }}</p>
                 </div>

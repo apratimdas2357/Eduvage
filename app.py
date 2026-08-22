@@ -36,6 +36,49 @@ def verify_password(stored_password, provided_password):
 
     return False
 
+@app.route('/apply', methods=['GET', 'POST'])
+def apply():
+    if request.method == 'POST':
+        full_name = request.form.get('full_name')
+        email = request.form.get('email')
+        password = request.form.get('password')
+
+        try:
+            supabase = get_supabase()
+
+            # Check if email exists
+            existing = supabase.table('profiles').select('id').eq('email', email).execute()
+            if existing.data:
+                return render_template('apply.html', error="Email already exists.")
+
+            # For simplicity, hash using sha256 as done in verify_password
+            hashed_pw = hashlib.sha256(password.encode('utf-8')).hexdigest()
+
+            # Insert profile with 'pending' role
+            prof_resp = supabase.table('profiles').insert({
+                'email': email,
+                'password_hash': hashed_pw,
+                'role': 'pending'
+            }).execute()
+
+            if prof_resp.data:
+                profile_id = prof_resp.data[0]['id']
+                # Insert pending student
+                supabase.table('students').insert({
+                    'profile_id': profile_id,
+                    'full_name': full_name,
+                    'roll_number': f"PENDING-{profile_id[:8].upper()}"
+                }).execute()
+
+                return redirect(url_for('login', error="Application submitted successfully. Waiting for admin approval."))
+
+        except Exception as e:
+            print(f"Apply error: {e}")
+            return render_template('apply.html', error="An error occurred during application.")
+
+    return render_template('apply.html')
+
+
 @app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -93,7 +136,8 @@ def login():
             print(f"Supabase error: {e}")
             return render_template('login.html', error="Database error. Please try again later.")
 
-    return render_template('login.html')
+    error = request.args.get('error')
+    return render_template('login.html', error=error)
 
 @app.route('/dashboard')
 @requires_role('student')
@@ -263,18 +307,45 @@ def admin_dashboard():
         supabase = get_supabase()
         # Admin can view all users
         profiles_resp = supabase.table('profiles').select('*').execute()
-        profiles = profiles_resp.data
+
+        pending = []
+        active = []
+
+        for p in profiles_resp.data:
+            if p.get('role') == 'pending':
+                pending.append(p)
+            else:
+                active.append(p)
 
         data = {
             "user_name": "Admin User",
             "user_initials": "AD",
-            "profiles": profiles
+            "pending_profiles": pending,
+            "active_profiles": active
         }
     except Exception as e:
         print(f"Supabase admin dashboard error: {e}")
         return render_template('login.html', error="Failed to fetch admin data.")
 
     return render_template('admin_dashboard.html', data=data)
+
+@app.route('/approve_application', methods=['POST'])
+@requires_role('admin')
+def approve_application():
+    profile_id = request.form.get('profile_id')
+    roll_number = request.form.get('roll_number')
+
+    try:
+        supabase = get_supabase()
+        # Update profile role to student
+        supabase.table('profiles').update({'role': 'student'}).eq('id', profile_id).execute()
+        # Update student roll number
+        supabase.table('students').update({'roll_number': roll_number}).eq('profile_id', profile_id).execute()
+
+    except Exception as e:
+        print(f"Error approving application: {e}")
+
+    return redirect(url_for('admin_dashboard'))
 
 @app.route('/update_marks', methods=['POST'])
 @requires_role('teacher')

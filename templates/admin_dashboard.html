@@ -40,10 +40,11 @@
                 <h2 class="text-xl font-semibold">Admin Dashboard</h2>
             </div>
             <div class="flex items-center space-x-4">
+                <a href="{{ url_for('logout') }}" class="md:hidden text-sm font-medium text-gray-500 hover:text-red-500 transition mr-2">Logout</a>
                 <div class="bg-primary text-white w-10 h-10 rounded-full flex items-center justify-center font-bold">
                     {{ data.user_initials }}
                 </div>
-                <div class="hidden sm:block">
+                <div class="hidden sm:block text-right">
                     <p class="font-medium text-sm leading-tight">{{ data.user_name }}</p>
                     <p class="text-xs text-gray-500">Administrator</p>
                 </div>
@@ -53,9 +54,45 @@
         <div class="p-8">
             <h1 class="text-3xl font-bold mb-8">System Overview</h1>
 
+            {% if data.pending_profiles %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8 border-l-4 border-l-yellow-400">
+                <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-yellow-50">
+                    <h3 class="text-lg font-bold text-yellow-800">Pending Applications</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for profile in data.pending_profiles %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ profile.id[:8] }}...</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ profile.email }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <form action="{{ url_for('approve_application') }}" method="POST">
+                                        <input type="hidden" name="profile_id" value="{{ profile.id }}">
+                                        <div class="flex space-x-2">
+                                            <input type="text" name="roll_number" placeholder="Assign Roll No" class="border border-gray-300 rounded px-2 py-1 text-sm outline-none focus:border-primary" required>
+                                            <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm font-bold transition">Approve</button>
+                                        </div>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                    <h3 class="text-lg font-bold">All Users (Profiles)</h3>
+                    <h3 class="text-lg font-bold">Active Users</h3>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
@@ -68,7 +105,7 @@
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
-                            {% for profile in data.profiles %}
+                            {% for profile in data.active_profiles %}
                             <tr>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ profile.id[:8] }}...</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ profile.email }}</td>
