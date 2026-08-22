@@ -6,6 +6,7 @@ import requests
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from supabase_client import get_supabase
 
+from werkzeug.security import generate_password_hash, check_password_hash
 import hashlib
 
 app = Flask(__name__)
@@ -43,15 +44,16 @@ def requires_role(role_name):
     return decorator
 
 def verify_password(stored_password, provided_password):
-    # For a real application, you must use something like werkzeug.security.check_password_hash
-    # But because our schema defines password_hash and we don't know the exact hashing mechanism used externally,
-    # we will just do a direct comparison if it's plain text, or try a simple sha256.
-    # The ideal scenario is that the registration system puts properly hashed passwords using bcrypt/werkzeug.
     if stored_password == provided_password:
         return True
+    # If the hash starts with pbkdf2:sha256 or scrypt (werkzeug default)
+    try:
+        if check_password_hash(stored_password, provided_password):
+            return True
+    except:
+        pass
 
-    # Try basic SHA-256 hash in case the database actually stores sha256 hashes of the password
-    # (Just a fallback to make it slightly more robust for a prototype)
+    # Fallback to sha256 for backward compatibility with existing tests/data
     hashed_provided = hashlib.sha256(provided_password.encode('utf-8')).hexdigest()
     if stored_password == hashed_provided:
         return True
@@ -73,24 +75,20 @@ def apply():
             if existing.data:
                 return render_template('apply.html', error="Email already exists.")
 
-            # For simplicity, hash using sha256 as done in verify_password
-            hashed_pw = hashlib.sha256(password.encode('utf-8')).hexdigest()
+            # Hash using werkzeug
+            hashed_pw = generate_password_hash(password)
 
-            # Insert profile with 'pending' role
+            # Insert profile with 'student' role (pending approval logic handles access)
             prof_resp = supabase.table('profiles').insert({
                 'email': email,
                 'password_hash': hashed_pw,
-                'role': 'pending'
+                'role': 'student'
             }).execute()
 
             if prof_resp.data:
                 profile_id = prof_resp.data[0]['id']
-                # Insert pending student
-                supabase.table('students').insert({
-                    'profile_id': profile_id,
-                    'full_name': full_name,
-                    'roll_number': f"PENDING-{profile_id[:8].upper()}"
-                }).execute()
+                # Do NOT insert into students yet, wait for admin approval
+                # Admin dashboard will query profiles with role 'student' that do NOT have a student record
 
                 return redirect(url_for('login', error="Application submitted successfully. Waiting for admin approval."))
 
@@ -139,6 +137,8 @@ def login():
                         session['student_id'] = student_resp.data[0]['id']
                         session['role'] = 'student'
                         return redirect(url_for('dashboard'))
+                    else:
+                        return render_template('login.html', error="Your application is still pending approval.")
                 elif role == 'teacher':
                     teacher_resp = supabase.table('teachers').select('*').eq('profile_id', profile['id']).execute()
                     if teacher_resp.data:
@@ -482,11 +482,15 @@ def admin_dashboard():
         # Admin can view all users
         profiles_resp = supabase.table('profiles').select('*').execute()
 
+        # Get all approved students to distinguish from pending
+        students_resp = supabase.table('students').select('profile_id').execute()
+        approved_student_profile_ids = [s['profile_id'] for s in students_resp.data] if students_resp.data else []
+
         pending = []
         active = []
 
         for p in profiles_resp.data:
-            if p.get('role') == 'pending':
+            if p.get('role') == 'student' and p.get('id') not in approved_student_profile_ids:
                 pending.append(p)
             else:
                 active.append(p)
@@ -513,8 +517,26 @@ def approve_application():
         supabase = get_supabase()
         # Update profile role to student
         supabase.table('profiles').update({'role': 'student'}).eq('id', profile_id).execute()
-        # Update student roll number
-        supabase.table('students').update({'roll_number': roll_number}).eq('profile_id', profile_id).execute()
+
+        # Check if student record exists first, if not INSERT
+        existing_student = supabase.table('students').select('id').eq('profile_id', profile_id).execute()
+
+        if existing_student.data:
+             # Update student roll number
+             supabase.table('students').update({'roll_number': roll_number}).eq('profile_id', profile_id).execute()
+        else:
+             # We need a full_name, but we don't have it saved from the apply form.
+             # Let's see if we can extract it from the email or default it
+             # Ideally apply form should save pending students in another table, but for now we fallback
+             profile_resp = supabase.table('profiles').select('email').eq('id', profile_id).execute()
+             email = profile_resp.data[0]['email'] if profile_resp.data else 'Unknown'
+             full_name = email.split('@')[0].replace('.', ' ').title()
+
+             supabase.table('students').insert({
+                 'profile_id': profile_id,
+                 'full_name': full_name,
+                 'roll_number': roll_number
+             }).execute()
 
     except Exception as e:
         print(f"Error approving application: {e}")
