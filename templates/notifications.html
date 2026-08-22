@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}EduvageNotifications{% endblock %}
+
+{% block content %}
+<div class="flex h-screen bg-[#f7f7fa] overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 flex-shrink-0 hidden md:flex flex-col relative h-full z-20" style="background-color: #3b378f;">
+        <div class="p-6 flex items-center space-x-4 mt-2">
+            <div class="bg-white rounded-lg p-2 w-12 h-12 flex items-center justify-center">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Eduvage Logo" class="w-full h-auto object-contain">
+            </div>
+            <div>
+                <h2 class="text-2xl font-bold tracking-wider text-white mb-0 leading-none">EDUVAGE</h2>
+                <p class="text-xs text-gray-300 uppercase tracking-widest mt-1">Student Portal</p>
+            </div>
+        </div>
+
+        <nav class="mt-8 flex-1 z-10 relative">
+            <ul class="space-y-4">
+                <li><a href="{{ url_for('dashboard') }}" class="block py-2 px-8 hover:text-white text-gray-300 transition border-l-4 border-transparent text-lg">Dashboard</a></li>
+                <li><a href="{{ url_for('student_profile') }}" class="block py-2 px-8 hover:text-white text-gray-300 transition border-l-4 border-transparent text-lg">My Profile</a></li>
+                <li><a href="{{ url_for('attendance') }}" class="block py-2 px-8 hover:text-white text-gray-300 transition border-l-4 border-transparent text-lg">Attendance</a></li>
+                <li><a href="{{ url_for('marks') }}" class="block py-2 px-8 hover:text-white text-gray-300 transition border-l-4 border-transparent text-lg">Marks & Results</a></li>
+                <li><a href="{{ url_for('fees') }}" class="block py-2 px-8 hover:text-white text-gray-300 transition border-l-4 border-transparent text-lg">Fees & Payments</a></li>
+                <li><a href="{{ url_for('hostel') }}" class="block py-2 px-8 hover:text-white text-gray-300 transition border-l-4 border-transparent text-lg">Hostel</a></li>
+                <li><a href="{{ url_for('applications') }}" class="block py-2 px-8 hover:text-white text-gray-300 transition border-l-4 border-transparent text-lg">Applications</a></li>
+                <li><a href="{{ url_for('notifications') }}" class="block py-2 px-8 font-bold text-lg text-white border-l-4 border-white" style="background-color: #272473;">Notifications</a></li>
+                <li><a href="{{ url_for('settings') }}" class="block py-2 px-8 hover:text-white text-gray-300 transition border-l-4 border-transparent text-lg">Settings</a></li>
+            </ul>
+        </nav>
+
+        <div class="p-8 mb-4 z-10 relative mt-auto">
+            <a href="{{ url_for('logout') }}" class="text-gray-300 hover:text-white transition flex items-center gap-2 text-lg">
+                Logout
+            </a>
+        </div>
+
+        <!-- Bottom right triangle pattern exactly like image -->
+        <div class="absolute bottom-0 right-0 w-32 h-32 overflow-hidden z-0 pointer-events-none">
+            <div class="absolute bottom-0 right-0 w-0 h-0 border-b-[128px] border-l-[128px] border-b-white opacity-20 border-l-transparent"></div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col h-full overflow-hidden">
+
+        <!-- Top Navbar -->
+        <header class="bg-white border-b border-gray-200 px-6 lg:px-10 py-4 flex justify-between items-center flex-shrink-0 shadow-sm">
+            <!-- Mobile Menu Button -->
+            <button class="md:hidden text-primary">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+
+            <!-- Header removed to match Profile -->
+            <div class="hidden md:flex flex-col">
+                <h2 class="text-2xl font-bold text-gray-800">Notifications</h2>
+            </div>
+
+            <div class="flex items-center gap-4 text-right">
+                <a href="{{ url_for('logout') }}" class="md:hidden text-sm font-medium text-gray-500 hover:text-red-500 transition mr-2">Logout</a>
+            </div>
+        </header>
+
+        <!-- Main Scrollable Area -->
+        <main class="flex-1 overflow-y-auto p-6 lg:p-10">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+                <h1 class="text-2xl font-bold text-[#3b378f] mb-6 border-b pb-2">Notifications</h1>
+
+                {% if data.notifications %}
+                <div class="space-y-4">
+                    {% for notif in data.notifications %}
+                    <div class="p-4 rounded-lg border {% if not notif.is_read %}bg-blue-50 border-blue-200{% else %}bg-gray-50 border-gray-200{% endif %}">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-bold text-gray-900">{{ notif.title }}</h3>
+                            <span class="text-xs text-gray-500">{{ notif.created_at[:10] }}</span>
+                        </div>
+                        <p class="text-sm text-gray-700">{{ notif.message }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500">No notifications.</p>
+                {% endif %}
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}

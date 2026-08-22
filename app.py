@@ -1,6 +1,9 @@
 import os
 from functools import wraps
-from flask import Flask, render_template, request, redirect, url_for, session
+import threading
+import time
+import requests
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from supabase_client import get_supabase
 
 import hashlib
@@ -8,6 +11,25 @@ import hashlib
 app = Flask(__name__)
 # Try to get secret key from env to persist sessions across workers/restarts, otherwise fallback to random
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', os.urandom(24))
+
+def keep_alive():
+    """Background thread to ping the server and prevent sleeping on Render."""
+    url = os.environ.get('RENDER_EXTERNAL_URL', 'http://127.0.0.1:5000')
+    if not url.endswith('/ping'):
+        url = url + '/ping'
+    while True:
+        try:
+            requests.get(url, timeout=10)
+        except Exception:
+            pass
+        time.sleep(600) # Ping every 10 minutes
+
+# Start keep-alive thread
+threading.Thread(target=keep_alive, daemon=True).start()
+
+@app.route('/ping')
+def ping():
+    return jsonify(status="ok"), 200
 
 def requires_role(role_name):
     def decorator(f):
@@ -139,11 +161,157 @@ def login():
     error = request.args.get('error')
     return render_template('login.html', error=error)
 
-@app.route('/student/<page_name>')
+def get_student_common_data(student_id):
+    """Helper function to fetch common data like name, roll_no, etc. for the header."""
+    supabase = get_supabase()
+    student_resp = supabase.table('students').select('*').eq('id', student_id).execute()
+    student_data = student_resp.data[0] if student_resp.data else {}
+    full_name = student_data.get('full_name', 'Student')
+    initials = ''.join([n[0] for n in full_name.split(' ') if n])[:2].upper()
+    return {
+        "user_name": full_name,
+        "roll_no": student_data.get('roll_number', ''),
+        "user_initials": initials,
+    }
+
+@app.route('/profile')
 @requires_role('student')
-def student_page(page_name):
-    # This route will handle rendering the various side-bar links for the student portal.
-    return render_template('student_page.html', page_name=page_name.replace('-', ' ').title())
+def student_profile():
+    student_id = session.get('student_id')
+    if not student_id: return redirect(url_for('login'))
+
+    try:
+        supabase = get_supabase()
+        student_resp = supabase.table('students').select('*, profiles(email)').eq('id', student_id).execute()
+        student_data = student_resp.data[0] if student_resp.data else {}
+
+        acad_resp = supabase.table('student_academics').select('*').eq('student_id', student_id).execute()
+        acad_data = acad_resp.data[0] if acad_resp.data else {}
+
+        full_name = student_data.get('full_name', 'Student')
+        initials = ''.join([n[0] for n in full_name.split(' ') if n])[:2].upper()
+
+        data = {
+            "user_name": full_name,
+            "roll_no": student_data.get('roll_number', ''),
+            "user_initials": initials,
+            "email": student_data.get('profiles', {}).get('email', 'N/A'),
+            "dob": student_data.get('date_of_birth', 'N/A'),
+            "phone": student_data.get('phone', 'N/A'),
+            "address": student_data.get('address', 'N/A'),
+            "emergency_contact": student_data.get('emergency_contact', 'N/A'),
+
+            "course": acad_data.get('course', 'N/A'),
+            "department": acad_data.get('department', 'N/A'),
+            "semester": str(acad_data.get('semester', 'N/A')),
+            "section": acad_data.get('section', 'N/A'),
+            "admission_year": str(acad_data.get('admission_year', 'N/A')),
+            "college_name": os.environ.get("COLLEGE_NAME", "Kalyani Government Engineering College"),
+        }
+        return render_template('profile.html', data=data)
+    except Exception as e:
+        print(f"Error fetching profile: {e}")
+        return redirect(url_for('dashboard'))
+
+@app.route('/attendance')
+@requires_role('student')
+def attendance():
+    student_id = session.get('student_id')
+    if not student_id: return redirect(url_for('login'))
+
+    try:
+        data = get_student_common_data(student_id)
+        supabase = get_supabase()
+        att_resp = supabase.table('attendance').select('*, subjects(subject_name)').eq('student_id', student_id).execute()
+        data['attendance_records'] = att_resp.data
+        return render_template('attendance.html', data=data)
+    except Exception as e:
+        return redirect(url_for('dashboard'))
+
+@app.route('/marks')
+@requires_role('student')
+def marks():
+    student_id = session.get('student_id')
+    if not student_id: return redirect(url_for('login'))
+
+    try:
+        data = get_student_common_data(student_id)
+        supabase = get_supabase()
+        marks_resp = supabase.table('marks').select('*, subjects(subject_name), exams(exam_name)').eq('student_id', student_id).execute()
+        data['marks_records'] = marks_resp.data
+        return render_template('marks.html', data=data)
+    except Exception as e:
+        return redirect(url_for('dashboard'))
+
+@app.route('/fees')
+@requires_role('student')
+def fees():
+    student_id = session.get('student_id')
+    if not student_id: return redirect(url_for('login'))
+
+    try:
+        data = get_student_common_data(student_id)
+        supabase = get_supabase()
+        fees_resp = supabase.table('fees').select('*').eq('student_id', student_id).execute()
+        payments_resp = supabase.table('payments').select('*').eq('student_id', student_id).execute()
+        data['fee_details'] = fees_resp.data[0] if fees_resp.data else {}
+        data['payments'] = payments_resp.data
+        return render_template('fees.html', data=data)
+    except Exception as e:
+        return redirect(url_for('dashboard'))
+
+@app.route('/hostel')
+@requires_role('student')
+def hostel():
+    student_id = session.get('student_id')
+    if not student_id: return redirect(url_for('login'))
+
+    try:
+        data = get_student_common_data(student_id)
+        supabase = get_supabase()
+        hostel_resp = supabase.table('hostel').select('*').eq('student_id', student_id).execute()
+        data['hostel_details'] = hostel_resp.data[0] if hostel_resp.data else None
+        return render_template('hostel.html', data=data)
+    except Exception as e:
+        return redirect(url_for('dashboard'))
+
+@app.route('/applications')
+@requires_role('student')
+def applications():
+    student_id = session.get('student_id')
+    if not student_id: return redirect(url_for('login'))
+
+    try:
+        data = get_student_common_data(student_id)
+        supabase = get_supabase()
+        app_resp = supabase.table('applications').select('*').eq('student_id', student_id).execute()
+        data['applications'] = app_resp.data
+        return render_template('applications.html', data=data)
+    except Exception as e:
+        return redirect(url_for('dashboard'))
+
+@app.route('/notifications')
+@requires_role('student')
+def notifications():
+    student_id = session.get('student_id')
+    if not student_id: return redirect(url_for('login'))
+
+    try:
+        data = get_student_common_data(student_id)
+        supabase = get_supabase()
+        notif_resp = supabase.table('notifications').select('*').eq('student_id', student_id).order('created_at', desc=True).execute()
+        data['notifications'] = notif_resp.data
+        return render_template('notifications.html', data=data)
+    except Exception as e:
+        return redirect(url_for('dashboard'))
+
+@app.route('/settings')
+@requires_role('student')
+def settings():
+    student_id = session.get('student_id')
+    if not student_id: return redirect(url_for('login'))
+    data = get_student_common_data(student_id)
+    return render_template('settings.html', data=data)
 
 @app.route('/dashboard')
 @requires_role('student')
